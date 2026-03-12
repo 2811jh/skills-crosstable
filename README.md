@@ -5,7 +5,7 @@
 ## 安装
 
 ```bash
-npx skills add your-github-username/skills-crosstable --skill survey-crosstab
+npx skills add 2811jh/skills-crosstable --skill survey-crosstab
 ```
 
 安装后 Skill 会被放置到 `~/.agents/skills/survey-crosstab/` 目录。
