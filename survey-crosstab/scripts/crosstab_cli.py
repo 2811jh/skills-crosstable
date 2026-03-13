@@ -192,13 +192,13 @@ def cmd_run_all(args):
     print("\n[3/5] 执行交叉分析...")
     try:
         rows = json.loads(args.rows)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, TypeError):
         rows = ["all"]
     try:
         cols = json.loads(args.cols)
-    except json.JSONDecodeError:
-        print(f"  ❌ cols JSON 解析失败")
-        sys.exit(1)
+    except (json.JSONDecodeError, TypeError):
+        # 支持直接传列名字符串，自动包装为列表
+        cols = [args.cols]
     ct_result = run_crosstab(args.file_path, rows, cols)
     print(f"  ✅ 交叉分析完成: {ct_result.get('row_questions_count', '?')} 个行变量, "
           f"{ct_result.get('col_conditions_count', '?')} 个列条件")
@@ -257,7 +257,7 @@ def cmd_run_all(args):
                 })
 
             # 追加得分摘要
-            score_summary = summary_result.get("score_summary", {})
+            score_summary = summary_result.get("score_summary") or {}
             for score_name, scores in score_summary.items():
                 if scores:
                     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
