@@ -224,56 +224,9 @@ def cmd_run_all(args):
     print(f"  ✅ 差异摘要: {summary_result.get('questions_analyzed', '?')} 道题目")
 
     if args.output_path:
-        # 如果用户没有提供 report_text，则基于 summary 自动生成报告 JSON
         report_text = args.report_text or ""
-        if not report_text and summary_result.get("status") == "success":
-            report_entries = []
-            q_summaries = summary_result.get("question_summaries", {})
-            for q_name, q_data in q_summaries.items():
-                max_opt = q_data.get("max_diff_option", "")
-                max_diff = q_data.get("max_diff_value", 0)
-                if max_diff < 0.05:
-                    continue
-                # 构造 finding 描述
-                opt_data = q_data.get("options", {}).get(max_opt, {})
-                pcts = opt_data.get("percentages", {})
-                if pcts:
-                    sorted_pcts = sorted(pcts.items(), key=lambda x: x[1], reverse=True)
-                    highest = sorted_pcts[0]
-                    lowest = sorted_pcts[-1]
-                    h_group = highest[0].split("\n")[-1] if "\n" in highest[0] else highest[0]
-                    l_group = lowest[0].split("\n")[-1] if "\n" in lowest[0] else lowest[0]
-                    finding = (
-                        f"选项「{max_opt}」在不同分组间差异最大（{max_diff:.1%}）。"
-                        f"「{h_group}」最高（{highest[1]:.1%}），「{l_group}」最低（{lowest[1]:.1%}）。"
-                    )
-                else:
-                    finding = f"选项「{max_opt}」在不同分组间差异达 {max_diff:.1%}。"
-
-                report_entries.append({
-                    "question": q_name,
-                    "finding": finding,
-                    "detail": f"差异最大选项: {max_opt}, 最大差异值: {max_diff:.4f}",
-                })
-
-            # 追加得分摘要
-            score_summary = summary_result.get("score_summary") or {}
-            for score_name, scores in score_summary.items():
-                if scores:
-                    sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-                    highest = sorted_scores[0]
-                    lowest = sorted_scores[-1]
-                    h_group = highest[0].split("\n")[-1] if "\n" in highest[0] else highest[0]
-                    l_group = lowest[0].split("\n")[-1] if "\n" in lowest[0] else lowest[0]
-                    report_entries.append({
-                        "question": score_name,
-                        "finding": f"最高: {h_group}（{highest[1]:.2f}），最低: {l_group}（{lowest[1]:.2f}）",
-                        "detail": f"各分组得分: {json.dumps({k.split(chr(10))[-1] if chr(10) in k else k: round(v, 2) for k, v in scores.items()}, ensure_ascii=False)}",
-                    })
-
-            if report_entries:
-                report_text = json.dumps(report_entries, ensure_ascii=False)
-                print(f"  📝 自动生成分析报告: {len(report_entries)} 条发现")
+        if not report_text:
+            print("  ℹ️ 未提供 --report-text，分析报告 sheet 将留空（请 AI 阅读下方摘要后撰写报告，再次运行时传入）")
 
         try:
             out = export_crosstab_excel(
